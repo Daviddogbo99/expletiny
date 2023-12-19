@@ -20,6 +20,7 @@ import com.google.api.server.spi.auth.EspAuthenticator;
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entities;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
@@ -36,19 +37,45 @@ import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
 
-@Api(name = "petition", version = "v1", namespace = @ApiNamespace(ownerDomain = "tinypet.example.com", ownerName = "tinypet.example.com", packagePath = ""))
+@Api(name = "petition", version = "v1", clientIds = {
+          "911925711183-7rrf2ndcl9e4kc0oaloo5udolinfeu8s.apps.googleusercontent.com" }, audiences = {
+                    "911925711183-7rrf2ndcl9e4kc0oaloo5udolinfeu8s.apps.googleusercontent.com" }, namespace = @ApiNamespace(ownerDomain = "tinypet.example.com", ownerName = "tinypet.example.com", packagePath = ""))
 
 public class TinyPetEndpoint {
 
-     @ApiMethod(name="getPetitions")
-     public Entity getPet(@Named("name") String name)
-     {
-         Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
-         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-         PreparedQuery pq = datastore.prepare(q);
+     @ApiMethod(name = "getPetitions")
+     public Entity getPet(@Named("name") String name) {
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          PreparedQuery pq = datastore.prepare(q);
 
-         Entity result = pq.asSingleEntity();
-         return result;
+          Entity result = pq.asSingleEntity();
+          return result;
+     }
+
+     @ApiMethod(name = "CreatePetition", httpMethod = ApiMethod.HttpMethod.POST)
+     public Entity createPetition(User user, Petition p) throws UnauthorizedException {
+          if (user == null) {
+               throw new UnauthorizedException("Invalid credentials");
+          }
+
+          Entity e = new Entity("Petition", Long.MAX_VALUE-(new Date()).getTime()+":"+user.getEmail());
+          e.setProperty("Owner", user.getEmail());
+          e.setProperty("name", p.name);
+          e.setProperty("SignCount", 0);
+          e.setProperty("date", new Date());
+
+          Entity signatories = new Entity("PetitionSignatories", e.getKey());
+          HashSet<String> sign=new HashSet<String>();
+          signatories.setProperty("signatories", sign);
+
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore.beginTransaction();
+		datastore.put(e);
+		datastore.put(signatories);
+		txn.commit();
+		return e;
+
      }
 
 }
