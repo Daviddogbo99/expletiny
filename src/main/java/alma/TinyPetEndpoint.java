@@ -44,11 +44,10 @@ import com.google.appengine.api.datastore.Transaction;
 public class TinyPetEndpoint {
 
      @ApiMethod(name = "getPetitions")
-     public Entity getPet(@Named("name") String name) {
+     public Entity getPet(@Named("Petname") String name) {
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
           PreparedQuery pq = datastore.prepare(q);
-
           Entity result = pq.asSingleEntity();
           return result;
      }
@@ -76,6 +75,36 @@ public class TinyPetEndpoint {
 		txn.commit();
 		return e;
 
+     }
+
+     @ApiMethod(name = "sign")
+     public void sign(User user, @Named("Petname") String name) throws UnauthorizedException 
+     {
+          if (user == null) {
+               throw new UnauthorizedException("Invalid credentials");
+          }
+
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore.beginTransaction();
+          PreparedQuery pq = datastore.prepare(txn, q);
+          Entity result = pq.asSingleEntity();
+          Query q2 = new Query("PetitionSignatories", result.getKey());
+          Entity result2 = datastore.prepare(txn, q2).asSingleEntity();
+          HashSet<String> cs = (HashSet<String>) result2.getProperty("signatories");
+          if(cs.contains(user.getEmail()))
+          {
+               txn.rollback();
+               throw new UnauthorizedException("Already signed");
+          }
+          Long newsc = (Long)result.getProperty("signCount") + 1;
+          result.setProperty("SignCount", newsc);
+          cs.add(user.getEmail());
+          result2.setProperty("signatories", cs);
+          datastore.put(result);
+          datastore.put(result2);
+          txn.commit();
+          
      }
 
 }
