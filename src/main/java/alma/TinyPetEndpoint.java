@@ -36,23 +36,19 @@ import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
 
-@Api(name = "myApi",
-     version = "v1",
-     audiences = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
-  	 clientIds = {"927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
-        "927375242383-jm45ei76rdsfv7tmjv58tcsjjpvgkdje.apps.googleusercontent.com"},
-     namespace =
-     @ApiNamespace(
-		   ownerDomain = "helloworld.example.com",
-		   ownerName = "helloworld.example.com",
-		   packagePath = "")
-     )
+@Api(name = "petition", version = "v1", namespace = @ApiNamespace(ownerDomain = "tinypet.example.com", ownerName = "tinypet.example.com", packagePath = ""))
 
 public class TinyPetEndpoint {
 
+     @ApiMethod(name="getPetitions")
+     public Entity getPet(@Named("name") String name)
+     {
+         Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
+         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+         PreparedQuery pq = datastore.prepare(q);
 
-	Random r = new Random();
+         Entity result = pq.asSingleEntity();
+         return result;
+     }
 
-    
-	
 }
