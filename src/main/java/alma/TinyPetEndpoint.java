@@ -1,5 +1,6 @@
 package alma;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.repackaged.com.google.datastore.v1.PropertyFilter;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
 
@@ -45,7 +47,7 @@ public class TinyPetEndpoint {
 
      @ApiMethod(name = "getPetitions")
      public Entity getPet(@Named("Petname") String name) {
-          Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
           PreparedQuery pq = datastore.prepare(q);
           Entity result = pq.asSingleEntity();
@@ -58,53 +60,127 @@ public class TinyPetEndpoint {
                throw new UnauthorizedException("Invalid credentials");
           }
 
-          Entity e = new Entity("Petition", Long.MAX_VALUE-(new Date()).getTime()+":"+user.getEmail());
+          Entity e = new Entity("Petition", Long.MAX_VALUE - (new Date()).getTime() + ":" + user.getEmail());
           e.setProperty("Owner", user.getEmail());
           e.setProperty("name", p.name);
           e.setProperty("SignCount", 0);
           e.setProperty("date", new Date());
 
           Entity signatories = new Entity("PetitionSignatories", e.getKey());
-          HashSet<String> sign=new HashSet<String>();
+          HashSet<String> sign = new HashSet<String>();
           signatories.setProperty("signatories", sign);
 
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Transaction txn = datastore.beginTransaction();
-		datastore.put(e);
-		datastore.put(signatories);
-		txn.commit();
-		return e;
+          Transaction txn = datastore.beginTransaction();
+          datastore.put(e);
+          datastore.put(signatories);
+          txn.commit();
+          return e;
 
      }
 
      @ApiMethod(name = "sign")
-     public void sign(User user, @Named("Petname") String name) throws UnauthorizedException 
-     {
+     public void sign(User user, @Named("Petname") String name) throws UnauthorizedException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
           }
 
-          Query q = new Query("Petition").setFilter(new FilterPredicate("name", null, name));
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Transaction txn = datastore.beginTransaction();
+          Transaction txn = datastore.beginTransaction();
           PreparedQuery pq = datastore.prepare(txn, q);
           Entity result = pq.asSingleEntity();
           Query q2 = new Query("PetitionSignatories", result.getKey());
           Entity result2 = datastore.prepare(txn, q2).asSingleEntity();
           HashSet<String> cs = (HashSet<String>) result2.getProperty("signatories");
-          if(cs.contains(user.getEmail()))
-          {
+          if (cs.contains(user.getEmail())) {
                txn.rollback();
                throw new UnauthorizedException("Already signed");
           }
-          Long newsc = (Long)result.getProperty("signCount") + 1;
+          Long newsc = (Long) result.getProperty("signCount") + 1;
           result.setProperty("SignCount", newsc);
           cs.add(user.getEmail());
           result2.setProperty("signatories", cs);
           datastore.put(result);
           datastore.put(result2);
           txn.commit();
-          
+
      }
 
+     @ApiMethod(name = "unsafeCreatePet", httpMethod = ApiMethod.HttpMethod.POST)
+     public Entity createPetUnsafe(@Named("UserEmail") String email, Petition p) {
+          Entity e = new Entity("Petition", Long.MAX_VALUE - (new Date()).getTime() + ":" + email);
+          e.setProperty("Owner", email);
+          e.setProperty("name", p.name);
+          e.setProperty("SignCount", 0);
+          e.setProperty("date", new Date());
+
+          Entity signatories = new Entity("PetitionSignatories", e.getKey());
+          HashSet<String> sign = new HashSet<String>();
+          signatories.setProperty("signatories", sign);
+
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          Transaction txn = datastore.beginTransaction();
+          datastore.put(e);
+          datastore.put(signatories);
+          txn.commit();
+          return e;
+     }
+
+     @ApiMethod(name = "unsafeSign")
+     public void signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
+               throws UnauthorizedException {
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          Transaction txn = datastore.beginTransaction();
+          PreparedQuery pq = datastore.prepare(txn, q);
+          Entity result = pq.asSingleEntity();
+          Query q2 = new Query("PetitionSignatories", result.getKey());
+          Entity result2 = datastore.prepare(txn, q2).asSingleEntity();
+          HashSet<String> cs = (HashSet<String>) result2.getProperty("signatories");
+          if (cs.contains(email)) {
+               txn.rollback();
+               throw new UnauthorizedException("Already signed");
+          }
+          Long newsc = (Long) result.getProperty("signCount") + 1;
+          result.setProperty("SignCount", newsc);
+          cs.add(email);
+          result2.setProperty("signatories", cs);
+          datastore.put(result);
+          datastore.put(result2);
+          txn.commit();
+     }
+
+     @ApiMethod(name = "getSignedBy", httpMethod = HttpMethod.GET)
+     public List<Entity> getSignedBy(@Named("userEmail") String email) {
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+          List<Entity> pets = new ArrayList<>();
+          Query q = new Query("PetitionSignatories")
+                    .setFilter(new FilterPredicate("signatories", FilterOperator.EQUAL, email));
+          PreparedQuery pq = datastore.prepare(q);
+          List<Entity> r1 = pq.asList(FetchOptions.Builder.withLimit(250));
+          List<Key> k = new ArrayList<>();
+          for (Entity e : r1) {
+               k.add(e.getParent());
+          }
+
+          Query q2 = new Query("Petition").setFilter(new FilterPredicate("__key__", FilterOperator.IN, k));
+          PreparedQuery pq2 = datastore.prepare(q2);
+          pets = pq2.asList(FetchOptions.Builder.withLimit(250));
+
+          return pets;
+     }
+
+     @ApiMethod(name = "topPets", httpMethod = HttpMethod.GET)
+     public List<Entity> topPets() {
+          List<Entity> e;
+
+          Query q = new Query("Petition").addSort("SignCount", SortDirection.DESCENDING);
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          PreparedQuery pq = datastore.prepare(q);
+          e = pq.asList(FetchOptions.Builder.withLimit(100));
+
+          return e;
+     }
 }
