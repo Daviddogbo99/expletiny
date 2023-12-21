@@ -49,7 +49,7 @@ import alma.Petition;
 
 public class TinyPetEndpoint {
 
-     @ApiMethod(name = "getPetition")
+     @ApiMethod(name = "getPetition", httpMethod = ApiMethod.HttpMethod.GET, path = "getPetition/{Petname}")
      public Entity getPet(@Named("Petname") String name) {
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -58,7 +58,7 @@ public class TinyPetEndpoint {
           return result;
      }
 
-     @ApiMethod(name = "CreatePetition", httpMethod = ApiMethod.HttpMethod.POST)
+     @ApiMethod(name = "CreatePetition", httpMethod = ApiMethod.HttpMethod.POST, path = "CreatePetition")
      public Entity createPetition(User user, alma.Petition p) throws UnauthorizedException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
@@ -68,7 +68,7 @@ public class TinyPetEndpoint {
 
      }
 
-     @ApiMethod(name = "sign")
+     @ApiMethod(name = "sign", httpMethod = ApiMethod.HttpMethod.POST, path = "sign/{Petname}")
      public Entity sign(User user, @Named("Petname") String name) throws UnauthorizedException, NotFoundException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
@@ -81,13 +81,13 @@ public class TinyPetEndpoint {
 
      }
 
-     @ApiMethod(name = "unsafeCreatePet", httpMethod = ApiMethod.HttpMethod.POST)
+     @ApiMethod(name = "unsafeCreatePet", httpMethod = ApiMethod.HttpMethod.POST, path = "unsafeCreatePet/{UserEmail}")
      public Entity createPetUnsafe(@Named("UserEmail") String email, alma.Petition p) {
 
           return createPet(email, p);
      }
 
-     @ApiMethod(name = "unsafeSign", httpMethod = HttpMethod.GET)
+     @ApiMethod(name = "unsafeSign", httpMethod = HttpMethod.GET, path = "unsafeSign/{UserEmail}/{Petname}")
      public Entity signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
                throws UnauthorizedException, NotFoundException {
 
@@ -95,18 +95,24 @@ public class TinyPetEndpoint {
           return signPet(email, name);
      }
 
-     @ApiMethod(name = "getSignedBy", httpMethod = HttpMethod.GET)
+     @ApiMethod(name = "getSignedBy", httpMethod = HttpMethod.GET, path = "getSignedBy/{userEmail}")
      public List<Entity> getSignedBy(@Named("userEmail") String email) {
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          List<Key> k = new ArrayList<>();
 
           List<Entity> pets = new ArrayList<>();
-          Query q = new Query("PetitionSignatories")
-                    .setFilter(new FilterPredicate("signatories", FilterOperator.EQUAL, email));
-          PreparedQuery pq = datastore.prepare(q);
-          List<Entity> r1 = pq.asList(FetchOptions.Builder.withLimit(250));
-          List<Key> k = new ArrayList<>();
-          for (Entity e : r1) {
-               k.add(e.getParent());
+
+          for (int i = 0; i < 10; i++) {
+
+               Query q = new Query("PetitionSignatories")
+                         .setFilter(new FilterPredicate("signatories" + i, FilterOperator.EQUAL, email));
+               PreparedQuery pq = datastore.prepare(q);
+               List<Entity> r1 = pq.asList(FetchOptions.Builder.withLimit(250));
+
+               for (Entity e : r1) {
+                    k.add(e.getParent());
+               }
+
           }
 
           Query q2 = new Query("Petition").setFilter(new FilterPredicate("__key__", FilterOperator.IN, k));
@@ -116,7 +122,7 @@ public class TinyPetEndpoint {
           return pets;
      }
 
-     @ApiMethod(name = "topPets", httpMethod = HttpMethod.GET)
+     @ApiMethod(name = "topPets", httpMethod = HttpMethod.GET, path = "topPets")
      public List<Entity> topPets() {
           List<Entity> e;
 
@@ -128,7 +134,7 @@ public class TinyPetEndpoint {
           return e;
      }
 
-     @ApiMethod(name = "RandomPet", httpMethod = HttpMethod.GET)
+     @ApiMethod(name = "RandomPet", httpMethod = HttpMethod.GET, path = "RandomPet")
      public Entity createRpet() {
           alma.Petition p = new Petition();
 
@@ -141,7 +147,7 @@ public class TinyPetEndpoint {
 
      }
 
-     @ApiMethod(name = "getSigns", httpMethod = HttpMethod.GET)
+     @ApiMethod(name = "getSigns", httpMethod = HttpMethod.GET, path = "getSigns/{Petname}")
      public List<String> getSigns(@Named("Petname") String name) throws NotFoundException {
 
           name = name.replace(" ", "+");
