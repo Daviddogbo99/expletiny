@@ -88,7 +88,7 @@ public class TinyPetEndpoint {
      }
 
      @ApiMethod(name = "sign")
-     public Entity sign(User user, @Named("Petname") String name) throws UnauthorizedException {
+     public Entity sign(User user, @Named("Petname") String name) throws UnauthorizedException, NotFoundException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
           }
@@ -101,6 +101,11 @@ public class TinyPetEndpoint {
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
           PreparedQuery pq = datastore.prepare(q);
           Entity result = pq.asSingleEntity();
+
+          if (result == null)
+               throw new NotFoundException("pet with name \"" + name + "\" not found");
+
+          
           Key petitionKey = result.getKey();
 
           Transaction txn = datastore.beginTransaction();
@@ -169,7 +174,7 @@ public class TinyPetEndpoint {
           Entity result = pq.asSingleEntity();
 
           if (result == null)
-               throw new NotFoundException("pet with name " + name + "not found");
+               throw new NotFoundException("pet with name \"" + name + "\" not found");
 
           Key petitionKey = result.getKey();
 
