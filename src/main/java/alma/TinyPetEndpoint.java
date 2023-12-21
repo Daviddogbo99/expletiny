@@ -2,7 +2,6 @@ package alma;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -15,6 +14,7 @@ import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.config.Named;
 import com.google.api.server.spi.config.Nullable;
 import com.google.api.server.spi.response.CollectionResponse;
+import com.google.api.server.spi.response.NotFoundException;
 import com.google.api.server.spi.response.UnauthorizedException;
 import com.google.api.server.spi.auth.EspAuthenticator;
 
@@ -25,6 +25,7 @@ import com.google.appengine.api.datastore.Entities;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.PropertyProjection;
@@ -64,14 +65,17 @@ public class TinyPetEndpoint {
 
           long id = Long.MAX_VALUE - ((new Date()).getTime() + user.getEmail().hashCode());
 
-          Entity e = new Entity("Petition", id);
+          Key petitionKey = KeyFactory.createKey("Petition", id);
+          Entity e = new Entity(petitionKey);
+
           e.setProperty("Owner", user.getEmail());
-          e.setProperty("name", p.name);
+          e.setProperty("name", p.name.replace(' ', '+'));
           e.setProperty("SignCount", 0);
           e.setProperty("date", new Date());
 
-          Entity signatories = new Entity("PetitionSignatories", e.getKey());
-          HashSet<String> sign = new HashSet<String>();
+          Key signatoriesKey = KeyFactory.createKey(petitionKey, "PetitionSignatories", id);
+          Entity signatories = new Entity(signatoriesKey);
+          List<String> sign = new ArrayList<String>();
           signatories.setProperty("signatories", sign);
 
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -84,30 +88,44 @@ public class TinyPetEndpoint {
      }
 
      @ApiMethod(name = "sign")
-     public void sign(User user, @Named("Petname") String name) throws UnauthorizedException {
+     public Entity sign(User user, @Named("Petname") String name) throws UnauthorizedException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
           }
 
-          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+          String email = user.getEmail();
+
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-          Transaction txn = datastore.beginTransaction();
-          PreparedQuery pq = datastore.prepare(txn, q);
+
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+          PreparedQuery pq = datastore.prepare(q);
           Entity result = pq.asSingleEntity();
-          Query q2 = new Query("PetitionSignatories", result.getKey());
+          Key petitionKey = result.getKey();
+
+          Transaction txn = datastore.beginTransaction();
+          Query q2 = new Query("PetitionSignatories").setAncestor(petitionKey);
           Entity result2 = datastore.prepare(txn, q2).asSingleEntity();
-          HashSet<String> cs = (HashSet<String>) result2.getProperty("signatories");
-          if (cs.contains(user.getEmail())) {
+          List<String> cs = (List<String>) result2.getProperty("signatories");
+
+          if (cs == null)
+               cs = new ArrayList<>();
+
+          if (cs.contains(email)) {
                txn.rollback();
                throw new UnauthorizedException("Already signed");
           }
-          Long newsc = (Long) result.getProperty("signCount") + 1;
+
+          Long newsc = (Long) result.getProperty("SignCount") + 1;
           result.setProperty("SignCount", newsc);
-          cs.add(user.getEmail());
+          cs.add(email);
           result2.setProperty("signatories", cs);
+
           datastore.put(result);
           datastore.put(result2);
+
           txn.commit();
+
+          return result;
 
      }
 
@@ -116,14 +134,17 @@ public class TinyPetEndpoint {
 
           long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
 
-          Entity e = new Entity("Petition", id);
+          Key petitionKey = KeyFactory.createKey("Petition", id);
+          Entity e = new Entity(petitionKey);
+
           e.setProperty("Owner", email);
-          e.setProperty("name", p.name);
+          e.setProperty("name", p.name.replace(' ', '+'));
           e.setProperty("SignCount", 0);
           e.setProperty("date", new Date());
 
-          Entity signatories = new Entity("PetitionSignatories", e.getKey());
-          HashSet<String> sign = new HashSet<String>();
+          Key signatoriesKey = KeyFactory.createKey(petitionKey, "PetitionSignatories", id);
+          Entity signatories = new Entity(signatoriesKey);
+          List<String> sign = new ArrayList<String>();
           signatories.setProperty("signatories", sign);
 
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -135,27 +156,44 @@ public class TinyPetEndpoint {
      }
 
      @ApiMethod(name = "unsafeSign", httpMethod = HttpMethod.GET)
-     public void signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
-               throws UnauthorizedException {
-          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+     public Entity signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
+               throws UnauthorizedException, NotFoundException {
+
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-          Transaction txn = datastore.beginTransaction();
-          PreparedQuery pq = datastore.prepare(txn, q);
+
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+          PreparedQuery pq = datastore.prepare(q);
           Entity result = pq.asSingleEntity();
-          Query q2 = new Query("PetitionSignatories", result.getKey());
+
+          if (result == null)
+               throw new NotFoundException("pet not found");
+
+          Key petitionKey = result.getKey();
+
+          Transaction txn = datastore.beginTransaction();
+          Query q2 = new Query("PetitionSignatories").setAncestor(petitionKey);
           Entity result2 = datastore.prepare(txn, q2).asSingleEntity();
-          HashSet<String> cs = (HashSet<String>) result2.getProperty("signatories");
+          List<String> cs = (ArrayList<String>) result2.getProperty("signatories");
+
+          if (cs == null)
+               cs = new ArrayList<>();
+
           if (cs.contains(email)) {
                txn.rollback();
                throw new UnauthorizedException("Already signed");
           }
-          Long newsc = (Long) result.getProperty("signCount") + 1;
+
+          Long newsc = (Long) result.getProperty("SignCount") + 1;
           result.setProperty("SignCount", newsc);
           cs.add(email);
           result2.setProperty("signatories", cs);
+
           datastore.put(result);
           datastore.put(result2);
+
           txn.commit();
+
+          return result;
      }
 
      @ApiMethod(name = "getSignedBy", httpMethod = HttpMethod.GET)
@@ -202,14 +240,17 @@ public class TinyPetEndpoint {
 
           long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
 
-          Entity e = new Entity("Petition", id);
+          Key petitionKey = KeyFactory.createKey("Petition", id);
+          Entity e = new Entity(petitionKey);
+
           e.setProperty("Owner", email);
-          e.setProperty("name", p.name);
+          e.setProperty("name", p.name.replace(' ', '+'));
           e.setProperty("SignCount", 0);
           e.setProperty("date", new Date());
 
-          Entity signatories = new Entity("PetitionSignatories", e.getKey());
-          HashSet<String> sign = new HashSet<String>();
+          Key signatoriesKey = KeyFactory.createKey(petitionKey, "PetitionSignatories", id);
+          Entity signatories = new Entity(signatoriesKey);
+          List<String> sign = new ArrayList<String>();
           signatories.setProperty("signatories", sign);
 
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
