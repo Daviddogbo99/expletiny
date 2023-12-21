@@ -227,6 +227,7 @@ public class TinyPetEndpoint {
 
           for (int i = 0; i < 10; i++) {
                List<String> ls = (List) result.getProperty("signatories" + i);
+
                if (ls != null) {
                     retval = retval || ls.contains(email);
                }
@@ -240,13 +241,19 @@ public class TinyPetEndpoint {
 
      private boolean addSignatory(Entity result, String email) {
 
-          List<String> ls = (List) result.getProperty("signatories" + (int) (new Date().getTime() % 10));
+          int i = (int) (new Date().getTime() % 10);
+
+          List<String> ls = (List) result.getProperty("signatories" + i);
 
           if (ls == null) {
                ls = new ArrayList<>();
           }
 
-          return ls.add(email);
+          boolean retval = ls.add(email);
+
+          result.setProperty("signatories" + i, ls);
+
+          return retval;
 
      }
 
