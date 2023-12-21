@@ -177,6 +177,11 @@ public class TinyPetEndpoint {
      private Entity createPet(String email, alma.Petition p) {
           long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
 
+          if (p == null)
+               throw new NullPointerException("Petition is null");
+          if (p.name == null || p.body == null)
+               throw new NullPointerException("A field is null, " + p.name + " " + p.body);
+
           Key petitionKey = KeyFactory.createKey("Petition", id);
           Entity e = new Entity(petitionKey);
 
