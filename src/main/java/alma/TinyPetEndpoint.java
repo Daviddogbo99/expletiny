@@ -141,6 +141,27 @@ public class TinyPetEndpoint {
 
      }
 
+     @ApiMethod(name = "getSigns", httpMethod = HttpMethod.GET)
+     public List<String> getSigns(@Named("Petname") String name) throws NotFoundException {
+
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+          Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
+          PreparedQuery pq = datastore.prepare(q);
+          Entity result = pq.asSingleEntity();
+
+          if (result == null)
+               throw new NotFoundException("pet with name \"" + name + "\" not found");
+
+          Key petitionKey = result.getKey();
+
+          Query q2 = new Query("PetitionSignatories").setAncestor(petitionKey);
+          Entity result2 = datastore.prepare(q2).asSingleEntity();
+
+          return getSignatories(result2);
+
+     }
+
      private Entity getSigns(long id, Key petitionKey) {
           Key signatoriesKey = KeyFactory.createKey(petitionKey, "PetitionSignatories", id);
           Entity signatories = new Entity(signatoriesKey);
@@ -255,6 +276,20 @@ public class TinyPetEndpoint {
 
           return retval;
 
+     }
+
+     private List<String> getSignatories(Entity result) {
+          List<String> retval = new ArrayList<>();
+
+          for (int i = 0; i < 10; i++) {
+               List<String> ls = (List) result.getProperty("signatories" + i);
+
+               if (ls != null) {
+                    retval.addAll(ls);
+               }
+          }
+
+          return retval;
      }
 
 }
