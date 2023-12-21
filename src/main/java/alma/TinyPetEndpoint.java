@@ -144,6 +144,8 @@ public class TinyPetEndpoint {
      @ApiMethod(name = "getSigns", httpMethod = HttpMethod.GET)
      public List<String> getSigns(@Named("Petname") String name) throws NotFoundException {
 
+          name = name.replace("", "+");
+
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
