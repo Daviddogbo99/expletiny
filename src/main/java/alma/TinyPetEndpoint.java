@@ -94,6 +94,7 @@ public class TinyPetEndpoint {
           }
 
           String email = user.getEmail();
+          name = name.replace(" ", "+");
 
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
@@ -159,6 +160,8 @@ public class TinyPetEndpoint {
      public Entity signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
                throws UnauthorizedException, NotFoundException {
 
+          name = name.replace(" ", "+");
+
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
@@ -166,7 +169,7 @@ public class TinyPetEndpoint {
           Entity result = pq.asSingleEntity();
 
           if (result == null)
-               throw new NotFoundException("pet with name" + name + "not found");
+               throw new NotFoundException("pet with name " + name + "not found");
 
           Key petitionKey = result.getKey();
 
