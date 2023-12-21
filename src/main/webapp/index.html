@@ -20,7 +20,17 @@
 
    <script>
 
-      m.mount(document.getElementById("main"), MainView);
+      var Body = {
+         view: function () {
+            return m("h1",
+               "TinyPet 2023 qui me fait chier"
+            )
+         }
+      }
+
+
+      m.mount(document.body, Body)
+
 
    </script>
 </body>
