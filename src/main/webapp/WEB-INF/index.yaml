@@ -1,0 +1,8 @@
+indexes:
+ -  kind : Petition
+    properties : 
+      - name: Owner 
+      - name: Date
+ -  kind : PetitionSignatories
+    properties:
+      - name: signatories

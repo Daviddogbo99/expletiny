@@ -39,6 +39,8 @@ import com.google.appengine.repackaged.com.google.datastore.v1.PropertyFilter;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
 
+import alma.Petition;
+
 @Api(name = "petition", version = "v1", clientIds = {
           "911925711183-7rrf2ndcl9e4kc0oaloo5udolinfeu8s.apps.googleusercontent.com" }, audiences = {
                     "911925711183-7rrf2ndcl9e4kc0oaloo5udolinfeu8s.apps.googleusercontent.com" }, namespace = @ApiNamespace(ownerDomain = "tinypet.example.com", ownerName = "tinypet.example.com", packagePath = ""))
@@ -55,12 +57,14 @@ public class TinyPetEndpoint {
      }
 
      @ApiMethod(name = "CreatePetition", httpMethod = ApiMethod.HttpMethod.POST)
-     public Entity createPetition(User user, Petition p) throws UnauthorizedException {
+     public Entity createPetition(User user, alma.Petition p) throws UnauthorizedException {
           if (user == null) {
                throw new UnauthorizedException("Invalid credentials");
           }
 
-          Entity e = new Entity("Petition", Long.MAX_VALUE - (new Date()).getTime() + ":" + user.getEmail());
+          long id = Long.MAX_VALUE - ((new Date()).getTime() + user.getEmail().hashCode());
+
+          Entity e = new Entity("Petition", id);
           e.setProperty("Owner", user.getEmail());
           e.setProperty("name", p.name);
           e.setProperty("SignCount", 0);
@@ -108,8 +112,11 @@ public class TinyPetEndpoint {
      }
 
      @ApiMethod(name = "unsafeCreatePet", httpMethod = ApiMethod.HttpMethod.POST)
-     public Entity createPetUnsafe(@Named("UserEmail") String email, Petition p) {
-          Entity e = new Entity("Petition", Long.MAX_VALUE - (new Date()).getTime() + ":" + email);
+     public Entity createPetUnsafe(@Named("UserEmail") String email, alma.Petition p) {
+
+          long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
+
+          Entity e = new Entity("Petition", id);
           e.setProperty("Owner", email);
           e.setProperty("name", p.name);
           e.setProperty("SignCount", 0);
@@ -127,7 +134,7 @@ public class TinyPetEndpoint {
           return e;
      }
 
-     @ApiMethod(name = "unsafeSign")
+     @ApiMethod(name = "unsafeSign", httpMethod = HttpMethod.GET)
      public void signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
                throws UnauthorizedException {
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
@@ -182,5 +189,35 @@ public class TinyPetEndpoint {
           e = pq.asList(FetchOptions.Builder.withLimit(100));
 
           return e;
+     }
+
+     @ApiMethod(name = "RandomPet", httpMethod = HttpMethod.GET)
+     public Entity createRpet() {
+          alma.Petition p = new Petition();
+
+          p.body = "<p> pet body <p>";
+          p.name = "random pet at " + new Date();
+
+          String email = "fake@email.com";
+
+          long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
+
+          Entity e = new Entity("Petition", id);
+          e.setProperty("Owner", email);
+          e.setProperty("name", p.name);
+          e.setProperty("SignCount", 0);
+          e.setProperty("date", new Date());
+
+          Entity signatories = new Entity("PetitionSignatories", e.getKey());
+          HashSet<String> sign = new HashSet<String>();
+          signatories.setProperty("signatories", sign);
+
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          Transaction txn = datastore.beginTransaction();
+          datastore.put(e);
+          datastore.put(signatories);
+          txn.commit();
+          return e;
+
      }
 }
