@@ -1,38 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
    <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>TinyPet</title>
-   <meta charset="utf-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
-   <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
-
-
    <script src="https://unpkg.com/mithril/mithril.js"></script>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         margin: 20px;
+      }
 
+      h1 {
+         text-align: center;
+      }
+
+      #table-container {
+         margin-top: 20px;
+         width: 100%;
+         display: flex;
+         justify-content: flex-end;
+      }
+
+      table {
+         width: 50%;
+      }
+   </style>
 </head>
 
 <body>
 
+   <div id="app"></div>
+
    <script>
+      // Définir le modèle de données
+      var TinyPet = {
+         petitionData: [], // Tableau pour stocker des données de pétitions
+         nameInput: '', // Variable pour stocker le nom
+         petitionInput: '', // Variable pour stocker la pétition
+      };
 
-      var Body = {
+      // Vue pour le tableau des pétitions
+      var PetitionView = {
          view: function () {
-            return m("h1",
-               "TinyPet 2023 qui me fait chier"
-            )
-         }
-      }
+            return m('#table-container', [
+               m('table', [
+                  m('thead', m('tr', [m('th', 'Nom'), m('th', 'Pétition')])),
+                  m('tbody', TinyPet.petitionData.map(function (row) {
+                     return m('tr', [m('td', row.name), m('td', row.petition)]);
+                  }))
+               ]),
+            ]);
+         },
+      };
 
+      // Vue pour le formulaire de pétition
+      var PetitionFormView = {
+         view: function () {
+            return m('div', [
+               m('h2', 'Ajouter une pétition'),
+               m('label', 'Nom :'),
+               m('input[type=text]', {
+                  value: TinyPet.nameInput,
+                  oninput: function (e) {
+                     TinyPet.nameInput = e.target.value;
+                  }
+               }),
+               m('label', 'Pétition :'),
+               m('input[type=text]', {
+                  value: TinyPet.petitionInput,
+                  oninput: function (e) {
+                     TinyPet.petitionInput = e.target.value;
+                  }
+               }),
+               m('button', {
+                  onclick: function () {
+                     // Ajouter la pétition au tableau
+                     TinyPet.petitionData.push({ name: TinyPet.nameInput, petition: TinyPet.petitionInput });
+                     // Réinitialiser les champs de texte
+                     TinyPet.nameInput = '';
+                     TinyPet.petitionInput = '';
+                  }
+               }, 'Ajouter'),
+            ]);
+         },
+      };
 
-      m.mount(document.body, Body)
+      // Combiner les vues dans une vue principale
+      var MainView = {
+         view: function () {
+            return [
+               m('h1', 'TinyPet'),
+               m(PetitionView),
+               m(PetitionFormView),
+            ];
+         },
+      };
 
-
+      // Montez l'application sur l'élément avec l'id "app"
+      m.mount(document.getElementById('app'), MainView);
    </script>
+
 </body>
 
 </html>
