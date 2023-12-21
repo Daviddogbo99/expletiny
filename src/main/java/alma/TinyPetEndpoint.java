@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import com.google.api.server.spi.auth.common.User;
 import com.google.api.server.spi.config.Api;
@@ -105,7 +106,6 @@ public class TinyPetEndpoint {
           if (result == null)
                throw new NotFoundException("pet with name \"" + name + "\" not found");
 
-          
           Key petitionKey = result.getKey();
 
           Transaction txn = datastore.beginTransaction();
@@ -244,7 +244,7 @@ public class TinyPetEndpoint {
           p.body = "<p> pet body <p>";
           p.name = "random pet at " + new Date();
 
-          String email = "fake@email.com";
+          String email = randomStringProvider() + "@"+ randomStringProvider() + ".com";
 
           long id = Long.MAX_VALUE - ((new Date()).getTime() + email.hashCode());
 
@@ -268,5 +268,17 @@ public class TinyPetEndpoint {
           txn.commit();
           return e;
 
+     }
+
+     private String randomStringProvider() {
+
+          Random r = new Random();
+
+          StringBuilder sb = new StringBuilder(10);
+          IntStream is = r.ints(97, 123).limit(10);
+          for (int i : is.toArray()) {
+               sb.append((char) i);
+          }
+          return sb.toString();
      }
 }
