@@ -166,7 +166,7 @@ public class TinyPetEndpoint {
           Entity result = pq.asSingleEntity();
 
           if (result == null)
-               throw new NotFoundException("pet not found");
+               throw new NotFoundException("pet with name" + name + "not found");
 
           Key petitionKey = result.getKey();
 
