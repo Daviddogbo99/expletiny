@@ -1,5 +1,15 @@
-appengine-standard-archetype
+TinyPet - 2023
 ============================
+
+## Description
+TinyPet est un projet effectué dans le cadre du cours de Données massives et cloud. Cette application web nous permet de créer, signer des pétitions en étant identifier avec son compte Google. L'application affiche la liste des pétitions signés, et le top 100 des pétitions.
+
+## Auteurs
+ARGA Théo
+BROSSARD Victor
+FISHER Daniel
+
+## Exécution de l'application
 
 This is a generated App Engine Standard Java application from the appengine-standard-archetype archetype.
 
@@ -13,21 +23,21 @@ detailed instructions.
 * [Maven](https://maven.apache.org/download.cgi) (at least 3.5)
 * [Google Cloud SDK](https://cloud.google.com/sdk/) (aka gcloud)
 
-## Setup
+### Setup
 
     gcloud init
     gcloud auth application-default login
 
-## Maven
-### Running locally
+### Maven
+#### Running locally
 
     mvn appengine:devserver
 
-### Deploying
+#### Deploying
 
     mvn appengine:update
 
-## Testing
+### Testing
 
     mvn verify
 
@@ -39,7 +49,7 @@ to (`src/main/test/...`).  The following resources are quite useful:
 * [Mockito](http://mockito.org/)
 * [Truth](http://google.github.io/truth/)
 
-## Updating to latest Artifacts
+### Updating to latest Artifacts
 
 An easy way to keep your projects up to date is to use the maven [Versions plugin][versions-plugin].
 
@@ -53,3 +63,6 @@ for Java 7.
 Our usual process is to test, update the versions, then test again before committing back.
 
 [plugin]: http://www.mojohaus.org/versions-maven-plugin/
+
+## "Kinds" Google datastore de notre projet
+
