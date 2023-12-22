@@ -1,108 +1,183 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
    <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>TinyPet</title>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+   <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+
+   <script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
    <script src="https://unpkg.com/mithril/mithril.js"></script>
-   <style>
-      body {
-         font-family: Arial, sans-serif;
-         display: flex;
-         flex-direction: column;
-         align-items: center;
-         margin: 20px;
-      }
 
-      h1 {
-         text-align: center;
-      }
-
-      #table-container {
-         margin-top: 20px;
-         width: 100%;
-         display: flex;
-         justify-content: flex-end;
-      }
-
-      table {
-         width: 50%;
-      }
-   </style>
 </head>
 
 <body>
 
-   <div id="app"></div>
-
    <script>
-      // Définir le modèle de données
-      var TinyPet = {
-         petitionData: [], // Tableau pour stocker des données de pétitions
-         nameInput: '', // Variable pour stocker le nom
-         petitionInput: '', // Variable pour stocker la pétition
-      };
+      /*
+      var DiceGame = {
+         turn: 0,
+         d1: 1,
+         d2: 1,
+         name: 'spock',
+         score: 0,
 
-      // Vue pour le tableau des pétitions
-      var PetitionView = {
-         view: function () {
-            return m('#table-container', [
-               m('table', [
-                  m('thead', m('tr', [m('th', 'Nom'), m('th', 'Pétition')])),
-                  m('tbody', TinyPet.petitionData.map(function (row) {
-                     return m('tr', [m('td', row.name), m('td', row.petition)]);
-                  }))
-               ]),
-            ]);
-         },
-      };
+         play: function () {
+            if (this.turn < 10) {
+               this.d1 = Math.floor((Math.random() * 5) + 1);
+               this.d2 = Math.floor((Math.random() * 5) + 1);
+               if (this.d1 + this.d2 == 7) {
+                  this.score += 10;
+               }
+               this.turn++;
+            } else {
+               Score.save(this.score, this.name);
+               this.turn = 0;
+               this.score = 0;
+            }
+         }
+      } // DiceGame
 
-      // Vue pour le formulaire de pétition
-      var PetitionFormView = {
+      var DiceView = {
          view: function () {
             return m('div', [
-               m('h2', 'Ajouter une pétition'),
-               m('label', 'Nom :'),
-               m('input[type=text]', {
-                  value: TinyPet.nameInput,
+               m('div', { class: 'subtitle' }, "Just play here"),
+               m("input[type=text][placeholder=name]", {
+                  value: DiceGame.name,
+                  class: 'input is-rounded',
                   oninput: function (e) {
-                     TinyPet.nameInput = e.target.value;
-                  }
+                     DiceGame.name = e.target.value
+                  },
                }),
-               m('label', 'Pétition :'),
-               m('input[type=text]', {
-                  value: TinyPet.petitionInput,
-                  oninput: function (e) {
-                     TinyPet.petitionInput = e.target.value;
-                  }
-               }),
+               m('div', { class: 'level' }, [
+                  m('label', { class: 'level-item' }, "turn:" + DiceGame.turn),
+                  m('label', { class: 'level-item' }, "score:" + DiceGame.score),
+               ]),
+               m('label', { class: 'label' }, "Dice 1:" + DiceGame.d1),
+               m('label', { class: 'label' }, "Dice 2:" + DiceGame.d2),
                m('button', {
-                  onclick: function () {
-                     // Ajouter la pétition au tableau
-                     TinyPet.petitionData.push({ name: TinyPet.nameInput, petition: TinyPet.petitionInput });
-                     // Réinitialiser les champs de texte
-                     TinyPet.nameInput = '';
-                     TinyPet.petitionInput = '';
-                  }
-               }, 'Ajouter'),
-            ]);
-         },
-      };
+                  class: 'button is-link',
+                  disabled: Login.name === '',
+                  onclick: function (e) { DiceGame.play() }
+               }, "play"),
+            ])
+         }
+      }*/
 
-      // Combiner les vues dans une vue principale
-      var MainView = {
+      var Petition = {
+         list: [],
+         loadList: function () {
+            return m.request({
+               method: "GET",
+               url: "_ah/api/petition/v1/topPets/"
+            })
+               .then(function (result) {
+                  Petition.list = result.items
+                  console.log("got:", result.items)
+                  // m.redraw(true) 
+               })
+         }
+      }
+
+      var PetitionView = {
+         oninit: Petition.loadList,
          view: function () {
-            return [
-               m('h1', 'TinyPet'),
-               m(PetitionView),
-               m(PetitionFormView),
-            ];
-         },
-      };
+            return m('div', [
+               m('div', { class: 'subtitle' }, "Top Pétitions"),
+               m('table', { class: 'table is-striped' }, [
+                  m('tr', [
+                     m('th', { width: "20px" }, "Author Name"),
+                     m('th', { width: "50px" }, "Pétition"),
+                  ]),
+                  Petition.list.map(function (item) {
+                     return m("tr", [
+                        m('td', m('label', item.properties.owner)),
+                        m('td', m('label', item.properties.date)),
+                     ])
+                  })
+               ])
+            ])
+         }
+      }
 
-      // Montez l'application sur l'élément avec l'id "app"
-      m.mount(document.getElementById('app'), MainView);
+
+      var Login = {
+         name: "",
+         email: "",
+         ID: "",
+         url: "",
+         handleCredential: function (response) {
+            console.log("callback called:" + response.credential)
+            // decodeJwtResponse() is a custom function defined by you
+            // to decode the credential response.
+            const responsePayload = jwt_decode(response.credential);
+
+            console.log("ID: " + responsePayload.sub);
+            console.log('Full Name: ' + responsePayload.name);
+            console.log('Given Name: ' + responsePayload.given_name);
+            console.log('Family Name: ' + responsePayload.family_name);
+            console.log("Image URL: " + responsePayload.picture);
+            console.log("Email: " + responsePayload.email);
+
+            DiceGame.name = responsePayload.name
+            Login.name = responsePayload.name
+            Login.email = responsePayload.email
+            Login.ID = response.credential
+            Login.url = responsePayload.picture
+            // external event
+            m.redraw()
+         }
+
+      }
+
+      var LoginView = {
+         view: function () {
+            return m('div', { class: 'container' }, [
+               m("h1", { class: 'title' }, 'Login'),
+               m("div", {
+                  "id": "g_id_onload",
+                  "data-client_id": "927375242383-jm45ei76rdsfv7tmjv58tcsjjpvgkdje.apps.googleusercontent.com",
+                  "data-callback": "handleCredentialResponse"
+               }),
+               m("div", {
+                  "class": "g_id_signin",
+                  "data-type": "standard"
+               }),
+               m("li", { class: 'content' }, "name:" + Login.name),
+               m("li", { class: 'content' }, "email:" + Login.email),
+               m("img", { "src": Login.url }),
+            ])
+         }
+
+      }
+
+      function handleCredentialResponse(response) {
+         console.log("callback called:" + response.credential)
+         Login.handleCredential(response)
+      }
+
+
+      var Body = {
+         view: function () {
+            return m('div', { class: 'container' }, [
+               m("h1", { class: 'title' }, 'TinyPet'),
+               m('div', { class: 'tile is-ancestor' }, [
+                  m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(LoginView))),
+                  m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(ScoreView)))
+               ])
+            ])
+         }
+      }
+
+      m.mount(document.body, Body)	
    </script>
 
 </body>
