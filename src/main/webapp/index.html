@@ -214,6 +214,49 @@
       }
 
 
+      var signgetter = {
+         petname: "Votez Francis !!",
+
+         get: function () {
+            return m.request({
+               method: "GET",
+               url: createPetUnsafe + "/" + petname,
+            })
+               .then(function (result) {
+                  console.log("got:", result)
+                  signView.list = result.items
+               })
+         }
+
+      }
+
+      var signView = {
+         list: [],
+         view: function () {
+            return m('div', { class: 'container' }, [
+               m("h1", { class: 'title' }, 'Get petition signataires'),
+               m("input[type=text][placeholder=Petition name]", {
+                  value: newPet.name,
+               }),
+               m('button', {
+                  class: 'button is-link',
+                  onclick: function (e) { signgetter.get() }
+               }, "Get"),
+               m('table', { class: 'table is-striped' }, [
+                  m('tr', [
+                     m('th', { width: "20px" }, "Signataire"),
+                  ]),
+                  signView.list.map(function (item) {
+                     return m("tr", [
+                        m('td', m('label', item.properties.items)),
+                     ])
+
+            ])
+         }
+
+      }
+
+
       var Body = {
          view: function () {
             return m('div', { class: 'container' }, [
@@ -221,7 +264,8 @@
                m('div', { class: 'tile is-ancestor' }, [
                   m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(LoginView))),
                   m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(PetitionView))),
-                  m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(AddPet)))
+                  m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(AddPet))),
+                  m("div", { class: 'tile' }, m('div', { class: 'tile is-child box' }, m(signView)))
                ])
             ])
          }
