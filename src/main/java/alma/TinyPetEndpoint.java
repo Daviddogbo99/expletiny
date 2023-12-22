@@ -198,8 +198,8 @@ public class TinyPetEndpoint {
           Transaction txn = datastore.beginTransaction();
           e = pq.asSingleEntity();
           List<String> tags = (List<String>) e.getProperty("tag");
-          tags.add(0, tag);
-          e.setProperty("tag", tag);
+          tags.add(tag);
+          e.setProperty("tag", tags);
           datastore.put(e);
           txn.commit();
           return e;
