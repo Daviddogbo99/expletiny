@@ -27,11 +27,11 @@ Url de la page web [`https://tinypet2023-fba.ey.r.appspot.com/`](https://tinypet
 
 ## Kinds :
 ### Pétition :
-![Kind pétition](\projet-tinypet-2023\img\firefox_iKctfALLOC.png)
+![Kind pétition](https://gitlab.univ-nantes.fr/E203173Q/projet-tinypet-2023/-/blob/main/img/firefox_G7fvHLujeR.png)
 Les pétitions ont un nom, un corps, une date, un créateur, une liste de tag et un nombre de signatures.
 
 ### Signataires :
-![Kind Signataires](\projet-tinypet-2023\img\firefox_G7fvHLujeR.png)
+![Kind Signataires](https://gitlab.univ-nantes.fr/E203173Q/projet-tinypet-2023/-/blob/main/img/firefox_G7fvHLujeR.png)
 Les signataires ont 10 listes de signataires, permettant un grand nombre de signatures.
 Elles sont liées aux pétitions par lien de parentée.
 
