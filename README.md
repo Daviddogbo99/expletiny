@@ -27,3 +27,8 @@ FISHER Daniel
     mvn clean package appengine:deploy
 
 
+# Kinds :
+
+
+
+
