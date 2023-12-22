@@ -22,6 +22,24 @@
 <body>
 
    <script>
+
+      /**
+       * URL Constants
+      */
+
+      const getPet = "api/petition/v1/getPetitions";
+      const createPet = "api/petition/v1/CreatePetition";
+      const sign = "api/petition/v1/sign";
+      const createPetUnsafe = "api/petition/v1/unsafeCreatePet";
+      const signUnsafe = "api/petition/v1/unsafeSign";
+      const getSignedBy = "api/petition/v1/getSignedBy";
+      const topPets = "api/petition/v1/topPets";
+      const randomPet = "api/petition/v1/RandomPet";
+      const addTag = "api/petition/v1/addTag"
+      const getPetsWithTag = "api/petition/v1/getPetsWithTag"
+
+
+
       /*
       var DiceGame = {
          turn: 0,
@@ -109,7 +127,11 @@
                         m('td', m('label', item.properties.SignCount)),
                      ])
                   })
-               ])
+               ]),
+               m('button', {
+                  class: 'button is-link',
+                  onclick: function (e) { Petition.loadList() }
+               }, "Refresh"),
             ])
          }
       }
@@ -234,23 +256,26 @@
          list: [],
          view: function () {
             return m('div', { class: 'container' }, [
-               m("h1", { class: 'title' }, 'Get petition signataires'),
-               m("input[type=text][placeholder=Petition name]", {
-                  value: newPet.name,
-               }),
-               m('button', {
-                  class: 'button is-link',
-                  onclick: function (e) { signgetter.get() }
-               }, "Get"),
-               m('table', { class: 'table is-striped' }, [
-                  m('tr', [
-                     m('th', { width: "20px" }, "Signataire"),
-                  ]),
-                  signView.list.map(function (item) {
-                     return m("tr", [
-                        m('td', m('label', item.properties.items)),
-                     ])
-
+               m('div', [
+                  m('div', { class: 'subtitle' }, "Get petition signataires"),
+                  m("input[type=text][placeholder=Petition name]", {
+                     value: newPet.name,
+                  }),
+                  m('button', {
+                     class: 'button is-link',
+                     onclick: function (e) { signgetter.get() }
+                  }, "Get"),
+                  m('table', { class: 'table is-striped' }, [
+                     m('tr', [
+                        m('th', { width: "20px" }, "Email"),
+                     ]),
+                     Petition.list.map(function (item) {
+                        return m("tr", [
+                           m('td', m('label', item.properties.items)),
+                        ])
+                     })
+                  ])
+               ])
             ])
          }
 
