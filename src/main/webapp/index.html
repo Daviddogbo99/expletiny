@@ -195,7 +195,7 @@
          create: function () {
             return m.request({
                method: "POST",
-               url: createPetUnsafe + "/" + email,
+               url: createPetUnsafe + "/" + newPet.email,
                params: {
                   name: name,
                   body: body
@@ -242,7 +242,7 @@
          get: function () {
             return m.request({
                method: "GET",
-               url: createPetUnsafe + "/" + petname,
+               url: createPetUnsafe + "/" + signgetter.petname,
             })
                .then(function (result) {
                   console.log("got:", result)
@@ -259,7 +259,7 @@
                m('div', [
                   m('div', { class: 'subtitle' }, "Get petition signataires"),
                   m("input[type=text][placeholder=Petition name]", {
-                     value: newPet.name,
+                     value: signgetter.name,
                   }),
                   m('button', {
                      class: 'button is-link',
