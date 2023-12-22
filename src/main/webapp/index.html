@@ -165,6 +165,49 @@
 
       }
 
+      var newPet = {
+         name: 'Petition name',
+         body: '<h1> pet body <h1>',
+         email: 'random@random',
+
+         create: function () {
+            return m.request({
+               method: "POST",
+               url: createPetUnsafe + "/" + email,
+               params: {
+                  name: name,
+                  body: body
+               },
+            })
+               .then(function (result) {
+                  console.log("got:", result)
+               })
+         }
+      }
+
+      var AddPet = {
+         view: function () {
+            return m('div', { class: 'container' }, [
+               m("h1", { class: 'title' }, 'Add petition'),
+               m("input[type=text][placeholder=Petition name]", {
+                  value: newPet.name,
+               }),
+               m("input[type=text][placeholder=Petition body]", {
+                  value: newPet.body,
+               }),
+               m("input[type=text][placeholder= email ]", {
+                  value: newPet.email,
+               }),
+
+               m('button', {
+                  class: 'button is-link',
+                  onclick: function (e) { DiceGame.play() }
+               }, "Create"),
+
+            ])
+         }
+      }
+
       function handleCredentialResponse(response) {
          console.log("callback called:" + response.credential)
          Login.handleCredential(response)
