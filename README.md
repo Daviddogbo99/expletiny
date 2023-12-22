@@ -23,7 +23,7 @@ FISHER Daniel
     mvn clean package appengine:deploy
 # Rendu :
 
-Url de la page web `https://tinypet2023-fba.ey.r.appspot.com/`
+Url de la page web [`https://tinypet2023-fba.ey.r.appspot.com/`](https://tinypet2023-fba.ey.r.appspot.com/)
 
 ## Kinds :
 ### Pétition :
@@ -44,6 +44,8 @@ L'api du backend est fonctionelle, et permet de :
 - Obtenir une liste des 100 pétitions les plus signées
 - Obtenir une liste des personnes ayant signer une Petition
 - Obtenir toutes les pétitions signées par un User.
+
+Il est possible d'intéragir avec l'API [ici](https://apis-explorer.appspot.com/apis-explorer/?base=https://tinypet2023-fba.appspot.com/_ah/api&root=https://tinypet2023-fba.appspot.com/_ah/api#p/).  
 
 Le frontend n'est pas complet.
 
