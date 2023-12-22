@@ -231,6 +231,7 @@ public class TinyPetEndpoint {
 
           e.setProperty("Owner", email);
           e.setProperty("name", p.name);
+          e.setProperty("body", p.body);
           e.setProperty("SignCount", 0);
           e.setProperty("tag", tags);
           e.setProperty("date", new Date());
