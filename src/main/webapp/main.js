@@ -10,4 +10,6 @@ const signUnsafe = "api/petition/v1/unsafeSign";
 const getSignedBy = "api/petition/v1/getSignedBy";
 const topPets = "api/petition/v1/topPets";
 const randomPet = "api/petition/v1/RandomPet";
+const addTag = "api/petition/v1/addTag"
+const getPetsWithTag = "api/petition/v1/getPetsWithTag"
 

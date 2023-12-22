@@ -171,6 +171,40 @@ public class TinyPetEndpoint {
 
      }
 
+     @ApiMethod(name = "getPetsWithTag", httpMethod = HttpMethod.GET, path = "getPetsWithTag/{tag}")
+     public List<Entity> getPetsWithTag(@Named("tag") String tag) throws NotFoundException {
+
+          List<Entity> e;
+
+          Query q = new Query("Petition").setFilter(new FilterPredicate("tag", FilterOperator.EQUAL, tag))
+                    .addSort("SignCount", SortDirection.DESCENDING);
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          PreparedQuery pq = datastore.prepare(q);
+          e = pq.asList(FetchOptions.Builder.withLimit(100));
+
+          return e;
+
+     }
+
+     @ApiMethod(name = "addTag", httpMethod = HttpMethod.GET, path = "addTag/{id}/{tag}")
+     public Entity addTag(@Named("id") long id, @Named("tag") String tag) {
+          Entity e;
+
+          Key PetId = KeyFactory.createKey("Petition", id);
+          Query q = new Query("Petition")
+                    .setFilter(new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.EQUAL, PetId));
+          DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+          PreparedQuery pq = datastore.prepare(q);
+          Transaction txn = datastore.beginTransaction();
+          e = pq.asSingleEntity();
+          List<String> tags = (List<String>) e.getProperty("tag");
+          tags.add(0, tag);
+          e.setProperty("tag", tag);
+          datastore.put(e);
+          txn.commit();
+          return e;
+     }
+
      private Entity getSigns(long id, Key petitionKey) {
           Key signatoriesKey = KeyFactory.createKey(petitionKey, "PetitionSignatories", id);
           Entity signatories = new Entity(signatoriesKey);
@@ -192,9 +226,13 @@ public class TinyPetEndpoint {
           Key petitionKey = KeyFactory.createKey("Petition", id);
           Entity e = new Entity(petitionKey);
 
+          List<String> tags = new ArrayList<>();
+          tags.add("default");
+
           e.setProperty("Owner", email);
           e.setProperty("name", p.name);
           e.setProperty("SignCount", 0);
+          e.setProperty("tag", tags);
           e.setProperty("date", new Date());
 
           Entity signatories = getSigns(id, petitionKey);
