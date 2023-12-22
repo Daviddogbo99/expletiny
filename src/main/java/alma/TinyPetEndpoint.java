@@ -50,11 +50,16 @@ import alma.Petition;
 public class TinyPetEndpoint {
 
      @ApiMethod(name = "getPetition", httpMethod = ApiMethod.HttpMethod.GET, path = "getPetition/{Petname}")
-     public Entity getPet(@Named("Petname") String name) {
+     public Entity getPet(@Named("Petname") String name) throws NotFoundException {
+
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
           PreparedQuery pq = datastore.prepare(q);
           Entity result = pq.asSingleEntity();
+
+          if (result == null)
+               throw new NotFoundException("no pet with name:" + name);
+
           return result;
      }
 
@@ -75,7 +80,6 @@ public class TinyPetEndpoint {
           }
 
           String email = user.getEmail();
-          name = name.replace(" ", "+");
 
           return signPet(email, name);
 
@@ -91,7 +95,6 @@ public class TinyPetEndpoint {
      public Entity signUnsafe(@Named("UserEmail") String email, @Named("Petname") String name)
                throws UnauthorizedException, NotFoundException {
 
-          name = name.replace(" ", "+");
           return signPet(email, name);
      }
 
@@ -150,8 +153,6 @@ public class TinyPetEndpoint {
      @ApiMethod(name = "getSigns", httpMethod = HttpMethod.GET, path = "getSigns/{Petname}")
      public List<String> getSigns(@Named("Petname") String name) throws NotFoundException {
 
-          name = name.replace(" ", "+");
-
           DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
           Query q = new Query("Petition").setFilter(new FilterPredicate("name", FilterOperator.EQUAL, name));
@@ -192,7 +193,7 @@ public class TinyPetEndpoint {
           Entity e = new Entity(petitionKey);
 
           e.setProperty("Owner", email);
-          e.setProperty("name", p.name.replace(' ', '+'));
+          e.setProperty("name", p.name);
           e.setProperty("SignCount", 0);
           e.setProperty("date", new Date());
 
